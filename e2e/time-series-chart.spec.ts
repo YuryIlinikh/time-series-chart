@@ -12,14 +12,17 @@ function collectRuntimeErrors(page: Page): Error[] {
   return errors;
 }
 
-async function showMiddleDateTooltip(chart: ReturnType<Page['getByRole']>): Promise<void> {
+async function showMiddleDateTooltip(
+  chart: ReturnType<Page['getByRole']>,
+  interaction: 'mouse' | 'touch' = 'mouse',
+): Promise<void> {
   const box = await chart.boundingBox();
   if (!box) throw new Error('Chart has no layout box');
 
-  await chart.dispatchEvent('pointermove', {
+  await chart.dispatchEvent(interaction === 'touch' ? 'pointerdown' : 'pointermove', {
     clientX: box.x + box.width / 2,
     clientY: box.y + box.height / 2,
-    pointerType: 'mouse',
+    pointerType: interaction,
   });
 }
 
@@ -84,14 +87,14 @@ for (const viewport of viewports) {
   });
 }
 
-test('shows the tooltip at a narrow viewport', async ({ page }) => {
+test('shows the tooltip after touch at a narrow viewport', async ({ page }) => {
   const runtimeErrors = collectRuntimeErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
 
   const chart = page.getByRole('img', { name: /time series chart/i });
   await expect(chart).toBeVisible();
-  await showMiddleDateTooltip(chart);
+  await showMiddleDateTooltip(chart, 'touch');
   await expect(page.getByText('12.06.2026')).toBeVisible();
   expect(runtimeErrors).toEqual([]);
 });

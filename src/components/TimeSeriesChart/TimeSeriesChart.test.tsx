@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ResizeObserverMock } from '../../test/setup';
 import { TimeSeriesChart } from './TimeSeriesChart';
@@ -67,6 +67,16 @@ describe('TimeSeriesChart', () => {
     chart.resize.mockClear();
     ResizeObserverMock.instances[0]?.trigger();
     expect(chart.resize).toHaveBeenCalledWith({ width: 592, height: 296 });
+  });
+
+  it('shows the tooltip on touch', () => {
+    render(<TimeSeriesChart {...data} />);
+    const host = screen.getByRole('img', { name: /time series chart/i });
+
+    fireEvent.pointerDown(host, { clientX: 296, clientY: 148, pointerType: 'touch' });
+
+    expect(screen.getByText('10.06.2026')).toBeVisible();
+    expect(screen.getByText('2.04')).toBeVisible();
   });
 
   it('disposes the chart and observer on unmount', () => {

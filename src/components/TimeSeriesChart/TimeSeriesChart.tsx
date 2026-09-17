@@ -168,7 +168,8 @@ export function TimeSeriesChart(props: TimeSeriesChartProps) {
       if (date) setHover({ date, x, y, items, halos, visible: true });
     };
 
-    const onLeave = () => {
+    const onLeave = (event: PointerEvent) => {
+      if (event.pointerType === 'touch') return;
       cancelHide();
       hideTimerRef.current = window.setTimeout(() => {
         setHover((current) => (current ? { ...current, visible: false } : null));
@@ -176,12 +177,23 @@ export function TimeSeriesChart(props: TimeSeriesChartProps) {
       }, 200);
     };
 
+    const onDocumentPointerDown = (event: PointerEvent) => {
+      if (event.pointerType === 'touch' && !interactionArea.contains(event.target as Node)) {
+        cancelHide();
+        setHover(null);
+      }
+    };
+
+    interactionArea.addEventListener('pointerdown', onMove);
     interactionArea.addEventListener('pointermove', onMove);
     interactionArea.addEventListener('pointerleave', onLeave);
+    document.addEventListener('pointerdown', onDocumentPointerDown, true);
     return () => {
       cancelHide();
+      interactionArea.removeEventListener('pointerdown', onMove);
       interactionArea.removeEventListener('pointermove', onMove);
       interactionArea.removeEventListener('pointerleave', onLeave);
+      document.removeEventListener('pointerdown', onDocumentPointerDown, true);
     };
   }, [model]);
 
